@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marathon d'Annecy 2027 — Plan d'entraînement</title>
+<meta name="description" content="Plans d'entraînement pour le marathon d'Annecy 2027, un par personne, synchronisés via Supabase.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%8F%94%EF%B8%8F</text></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --ink:#1A2B32; --muted:#5C6B6F; --faint:#8A9A9E; --bg:#F5F8F7; --border:#E3E8E7;
+  --primary:#1F6F8B; --primary-dark:#123B4A; --gold:#D9A441; --gold-deep:#A8790A;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);}
+button{font-family:inherit;cursor:pointer;background:none;border:none;padding:0;}
+input,select,textarea{font-family:inherit;}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px;}
+code{background:#EEF1F0;padding:2px 6px;border-radius:4px;font-size:0.9em;}
+
+.center-msg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.center-msg-inner{max-width:480px;color:var(--muted);}
+.center-msg-inner h2{font-family:'Oswald',sans-serif;color:var(--ink);font-size:20px;margin:0 0 12px;}
+.center-msg-inner p{line-height:1.6;margin:0 0 10px;}
+
+.sync-banner{background:#FBEAE8;color:#B5453D;font-size:13px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;z-index:60;}
+.sync-banner button{display:flex;flex-shrink:0;color:#B5453D;}
+.modal-error{background:#FBEAE8;color:#B5453D;font-size:13px;padding:8px 10px;border-radius:8px;margin-bottom:12px;line-height:1.4;}
+
+.header{background:var(--primary-dark);position:relative;overflow:hidden;}
+.header-inner{padding:32px 20px 64px;position:relative;z-index:2;max-width:900px;margin:0 auto;}
+.eyebrow{display:flex;align-items:center;gap:8px;color:#9FC1CC;font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
+.h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:28px;color:#fff;margin:0 0 22px;}
+.countdown{display:flex;margin-left:-10px;}
+.countdown-unit{padding:0 10px;text-align:center;}
+.countdown-value{font-family:'Oswald',sans-serif;font-weight:700;font-size:2.4rem;color:#F2C868;line-height:1;}
+.countdown-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9FC1CC;margin-top:8px;}
+.race-info{font-size:14px;color:#7FA6B3;margin-top:18px;}
+.mountains{position:absolute;bottom:0;left:0;width:100%;height:56px;opacity:.5;}
+
+.stats{display:flex;flex-wrap:wrap;background:#fff;margin-top:-32px;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.05);position:relative;z-index:2;}
+.stat{flex:1;min-width:140px;padding:14px 18px;border-right:1px solid var(--border);}
+.stat:last-child{border-right:none;}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);}
+.stat-value{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;color:var(--ink);margin-top:2px;}
+.stat-sub{font-size:12px;color:var(--faint);margin-top:2px;}
+
+/* selecteur de profil */
+.profile-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:22px 0 4px;}
+.profile-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;border:1px solid var(--border);color:var(--muted);}
+.profile-chip.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.profile-chip.add{color:var(--primary);border-style:dashed;background:transparent;}
+
+.cal-section{margin-top:20px;}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+.cal-nav{display:flex;align-items:center;gap:8px;}
+.icon-btn{padding:6px;border-radius:8px;display:flex;color:var(--ink);}
+.icon-btn:hover{background:#fff;}
+.cal-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:17px;width:170px;text-align:center;}
+.btn-primary{display:inline-flex;align-items:center;gap:6px;background:var(--primary);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;}
+
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:12px;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+.calendar{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);}
+.cal-weekday{text-align:center;font-size:11px;font-weight:600;color:var(--faint);padding:8px 0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+.day-cell{min-height:100px;min-width:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:5px;cursor:pointer;background:#fff;transition:background .15s;}
+.day-cell.out{background:#FAFBFA;}
+.day-cell.drag-over{background:#EAF3F0;}
+.day-num{font-size:13px;color:#33454B;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;}
+.day-cell.out .day-num{color:#B7C1C0;}
+.day-num.today{background:var(--primary);color:#fff;border-radius:50%;font-weight:700;}
+
+.pill{display:block;width:100%;text-align:left;border:1px solid;border-radius:6px;padding:3px 6px;margin-bottom:3px;font-size:11px;line-height:1.35;cursor:grab;}
+.pill:active{cursor:grabbing;}
+.pill-title{display:flex;align-items:flex-start;gap:4px;font-weight:500;min-width:0;white-space:normal;word-break:break-word;overflow-wrap:break-word;}
+.pill-title svg{flex-shrink:0;margin-top:2px;}
+.pill-km{opacity:.8;margin-top:1px;}
+.pill.missed{opacity:.5;}
+
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-top:28px;}
+.card-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-bottom:14px;}
+
+.chart-scroll{overflow-x:auto;padding-bottom:4px;}
+.chart-bars{display:flex;align-items:flex-end;gap:3px;height:100px;}
+.bar-col{width:11px;height:100%;display:flex;align-items:flex-end;flex-shrink:0;}
+.bar{width:100%;border-radius:2px 2px 0 0;background:#B9D4E5;}
+.bar.current{background:var(--gold);box-shadow:0 0 0 1.5px var(--gold-deep);}
+.chart-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:6px;}
+
+.pace-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;font-size:14px;}
+.pace-label{font-size:12px;color:var(--faint);}
+.pace-value{font-weight:600;color:var(--ink);margin-top:1px;}
+.pace-note{font-size:12px;color:var(--faint);margin-top:14px;line-height:1.5;}
+
+.reset-row{display:flex;justify-content:center;margin:22px 0 40px;}
+.reset-link{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--faint);}
+.confirm-row{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);flex-wrap:wrap;justify-content:center;}
+.btn-danger{background:#B5453D;color:#fff;padding:6px 12px;border-radius:6px;font-weight:600;}
+.btn-ghost{background:#F0F2F1;color:var(--muted);padding:6px 12px;border-radius:6px;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(20,30,34,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;}
+.modal{background:#fff;border-radius:14px;padding:24px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.modal-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:18px;}
+.field{margin-bottom:12px;}
+.field label{font-size:12px;font-weight:500;color:var(--muted);display:block;margin-bottom:4px;}
+.field input,.field select,.field textarea{width:100%;border:1px solid #D7DEDD;border-radius:8px;padding:8px 10px;font-size:14px;color:var(--ink);}
+.field textarea{resize:vertical;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.checkbox-row{display:flex;align-items:center;gap:8px;margin:14px 0 0;cursor:pointer;font-size:14px;font-weight:500;}
+.checkbox-row input{width:16px;height:16px;}
+.modal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
+.btn-cancel{background:#F0F2F1;color:var(--muted);padding:9px 16px;border-radius:8px;font-size:14px;}
+.btn-save{background:var(--primary);color:#fff;padding:9px 16px;border-radius:8px;font-size:14px;font-weight:600;}
+.btn-delete{color:#B5453D;font-size:14px;display:flex;align-items:center;gap:5px;padding:8px 10px;border-radius:8px;}
+.btn-delete:hover{background:#FBEAE8;}
+
+@media (max-width:640px){
+  .header-inner{padding:24px 16px 56px;}
+  .h1{font-size:22px;}
+  .countdown-value{font-size:1.8rem;}
+  .countdown-unit{padding:0 8px;}
+  .stat{min-width:calc(50% - 1px);}
+  .day-cell{min-height:78px;padding:3px;}
+  .pill{font-size:10px;padding:3px 5px;}
+  .cal-title{width:auto;}
+}
+</style>
+</head>
+<body>
+<script>
+window.onerror = function(msg, url, line){
+  var app = document.getElementById("app");
+  if (app && !app.innerHTML.trim()) {
+    app.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:system-ui,sans-serif;">' +
+      '<div style="max-width:520px;color:#5C6B6F;">' +
+      '<h2 style="color:#1A2B32;">Une erreur a empêché le chargement de la page</h2>' +
+      '<p style="line-height:1.6;">' + String(msg) + ' (ligne ' + line + ')</p>' +
+      '<p style="font-size:13px;">Si vous avez édité ce fichier à la main, vérifiez que les guillemets sont bien des guillemets droits ("), pas des guillemets typographiques.</p>' +
+      '</div></div>';
+  }
+  return false;
+};
+</script>
+<div id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ================================================================
+   CONFIGURATION SUPABASE
+   ================================================================ */
+const SUPABASE_URL = "https://zokzialsalhsgzvxzojn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_vANs-gnAOyJ8dee6iIEtWg_smG1PuGG";
+
+const SUPABASE_READY = !SUPABASE_URL.includes("VOTRE-PROJET") && !SUPABASE_KEY.includes("VOTRE_CLE");
+const supabaseClient = (SUPABASE_READY && window.supabase) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+/* ================================================================
+   CONSTANTES
+   ================================================================ */
+const RACE_DATE = new Date("2027-04-18T08:00:00+02:00");
+const START_DATE = "2026-09-08";
+
+const MONTHS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+const DAYS_FR = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+
+const CATS = {
+  easy:    { label: "Footing",       color: "#5B7F52", bg: "#EEF3EA", border: "#CBDBC2" },
+  quality: { label: "Qualité",       color: "#B8791E", bg: "#FBF1DC", border: "#ECCE94" },
+  long:    { label: "Sortie longue", color: "#2F6690", bg: "#E8F1F6", border: "#B9D4E5" },
+  test:    { label: "Course test",   color: "#8B4B6B", bg: "#F4E9EF", border: "#DDB9CC" },
+  race:    { label: "Marathon",      color: "#A8790A", bg: "#FBF3D9", border: "#E9CE86" },
+};
+
+const PHASE_LABELS = {
+  BASE1: "Base aérobie", BASE2: "Base aérobie", BUILD1: "Développement",
+  TEST: "Test de forme", RECUP: "Récupération", BUILD2: "Spécifique marathon",
+  PEAK: "Pic de charge", TAPER: "Affûtage", RACE: "Semaine de course", CUSTOM: "Séance ajoutée",
+};
+
+const ICONS = {
+  chevronLeft: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+  chevronRight:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+  x:           '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  check:       '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  plus:        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  trash:       '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+  info:        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  trendingUp:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+  rotate:      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+  mountain:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3 20l6-11 4 7 3-5 5 9z"/></svg>',
+};
+
+const WEEK_PLAN = [
+  { phase:"BASE1",  freq:3, long:10,    longType:"easy", quality:{title:"Footing + 4 lignes droites", km:7} , mon:0, fri:5 },
+  { phase:"BASE1",  freq:3, long:11,    longType:"easy", quality:{title:"Footing progressif (finir plus vite)", km:8}, mon:0, fri:6 },
+  { phase:"BASE1",  freq:3, long:12,    longType:"easy", quality:{title:"Footing + 6 lignes droites", km:8}, mon:0, fri:6 },
+  { phase:"BASE1",  freq:3, long:9,     longType:"easy", quality:{title:"Footing facile (semaine allégée)", km:6}, mon:0, fri:5 },
+  { phase:"BASE1",  freq:3, long:13,    longType:"easy", quality:{title:"Tempo 15 min modéré", km:8}, mon:0, fri:6 },
+  { phase:"BASE1",  freq:4, long:14,    longType:"easy", quality:{title:"Tempo 20 min", km:9}, mon:5, fri:7 },
+  { phase:"BASE2",  freq:4, long:15,    longType:"easy", quality:{title:"Seuil 2x10 min (récup 2 min)", km:9}, mon:5, fri:7 },
+  { phase:"BASE2",  freq:3, long:12,    longType:"easy", quality:{title:"Footing + lignes droites (allégée)", km:7}, mon:0, fri:6 },
+  { phase:"BASE2",  freq:4, long:16,    longType:"easy", quality:{title:"Seuil 3x8 min (récup 90s)", km:10}, mon:6, fri:8 },
+  { phase:"BASE2",  freq:4, long:17,    longType:"easy", quality:{title:"Fractionné 8x400m (récup 90s)", km:9}, mon:6, fri:8 },
+  { phase:"BUILD1", freq:4, long:18,    longType:"easy", quality:{title:"Seuil 25 min continu", km:10}, mon:6, fri:8 },
+  { phase:"BUILD1", freq:3, long:14,    longType:"easy", quality:{title:"Footing facile (allégée)", km:7}, mon:0, fri:6 },
+  { phase:"BUILD1", freq:4, long:18,    longType:"easy", quality:{title:"Fractionné 6x800m (récup 2 min)", km:10}, mon:6, fri:8 },
+  { phase:"BUILD1", freq:4, long:19,    longType:"easy", quality:{title:"Seuil 2x15 min (récup 3 min)", km:10}, mon:7, fri:9 },
+  { phase:"BUILD1", freq:4, long:20,    longType:"easy", quality:{title:"Fractionné 5x1000m (récup 2 min)", km:10}, mon:7, fri:9 },
+  { phase:"BUILD1", freq:2, long:12,    longType:"easy", longTitle:"Footing de Noël (léger)", quality:{title:"Footing très facile", km:6}, mon:0, fri:0 },
+  { phase:"BUILD1", freq:3, long:17,    longType:"easy", quality:{title:"Footing progressif (reprise)", km:8}, mon:0, fri:6 },
+  { phase:"BUILD1", freq:4, long:20,    longType:"easy", quality:{title:"Seuil 30 min continu", km:10}, mon:7, fri:9 },
+  { phase:"BUILD1", freq:3, long:15,    longType:"easy", quality:{title:"Footing + lignes droites", km:7}, mon:0, fri:7 },
+  { phase:"TEST",   freq:3, long:21.1,  longType:"test", longTitle:"Semi-marathon test (en course)", quality:{title:"Footing très facile (avant test)", km:6}, mon:0, fri:5 },
+  { phase:"RECUP",  freq:2, long:12,    longType:"easy", longTitle:"Footing facile (récupération)", quality:{title:"Footing très facile", km:6}, mon:0, fri:0 },
+  { phase:"BUILD2", freq:4, long:20,    longType:"mp",   longTitle:"Sortie longue 20km dont 8km allure marathon", quality:{title:"3x3km allure marathon (récup 3 min)", km:12}, mon:7, fri:9 },
+  { phase:"BUILD2", freq:4, long:22,    longType:"easy", quality:{title:"Seuil 3x12 min (récup 3 min)", km:11}, mon:8, fri:10 },
+  { phase:"BUILD2", freq:4, long:24,    longType:"easy", quality:{title:"Fractionné 5x1000m rapide (récup 2 min)", km:11}, mon:8, fri:10 },
+  { phase:"BUILD2", freq:3, long:17,    longType:"easy", quality:{title:"Footing facile (allégée)", km:8}, mon:0, fri:8 },
+  { phase:"BUILD2", freq:4, long:26,    longType:"mp",   longTitle:"Sortie longue 26km dont 14km allure marathon", quality:{title:"4x2km allure marathon (récup 2 min)", km:13}, mon:8, fri:10 },
+  { phase:"PEAK",   freq:4, long:29,    longType:"mp",   longTitle:"Sortie longue 29km dont 16km allure marathon", quality:{title:"Seuil 3x15 min (récup 3 min)", km:12}, mon:8, fri:10 },
+  { phase:"PEAK",   freq:4, long:32,    longType:"mp",   longTitle:"Sortie longue de référence — 32km dont 18km allure marathon", quality:{title:"Fractionné 6x1000m (récup 2 min)", km:11}, mon:8, fri:10 },
+  { phase:"TAPER",  freq:4, long:22,    longType:"mp",   longTitle:"Sortie longue 22km dont 10km allure marathon", quality:{title:"4x1000m allure marathon (récup 2 min)", km:9}, mon:7, fri:9 },
+  { phase:"TAPER",  freq:3, long:16,    longType:"easy", quality:{title:"3x1km allure semi (rappel de rythme)", km:7}, mon:0, fri:7 },
+  { phase:"TAPER",  freq:3, long:11,    longType:"easy", quality:{title:"5x200m rapide (affûtage)", km:5}, mon:0, fri:6 },
+  { phase:"RACE",   freq:0, long:42.195,longType:"race", longTitle:"MARATHON D'ANNECY", quality:{title:"Footing très facile + 4 lignes droites", km:5}, mon:0, fri:0 },
+];
+
+/* ================================================================
+   FONCTIONS UTILITAIRES
+   ================================================================ */
+function pad(n){ return String(n).padStart(2,"0"); }
+function fmtDate(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function addDays(d,n){ const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function todayStr(){ return fmtDate(new Date()); }
+function isoWeekBounds(d){
+  const mon = addDays(d, -((d.getDay()+6)%7));
+  const sun = addDays(mon,6);
+  return { mon: fmtDate(mon), sun: fmtDate(sun) };
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function slugify(name){
+  return (name || "").toString().trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/(^-+|-+$)/g, "") || "personne";
+}
+function uniqueProfileId(base){
+  let id = base, n = 2;
+  while (profiles.some(p=>p.id===id)) { id = base + "-" + n; n++; }
+  return id;
+}
+
+function mkSession(idx,date,cat,title,km,week,phase){
+  return { id:`s${idx}`, date, cat, title, km, week, phase, completed:false, actualKm:null, actualMin:null, notes:"" };
+}
+
+function generateDefaultSessions(){
+  const firstMonday = new Date(2026,8,7);
+  const sessions = [];
+  let c = 0;
+  WEEK_PLAN.forEach((w,i)=>{
+    const monday = addDays(firstMonday, 7*i);
+    const at = (off)=>fmtDate(addDays(monday,off));
+    const week = i+1;
+
+    if (w.phase === "RACE") {
+      const tue = at(1);
+      if (tue >= START_DATE) sessions.push(mkSession(c++, tue, "easy", w.quality.title, w.quality.km, week, w.phase));
+      sessions.push(mkSession(c++, at(6), "race", w.longTitle, w.long, week, w.phase));
+      return;
+    }
+    if (w.freq === 4 && w.mon > 0) sessions.push(mkSession(c++, at(0), "easy", "Footing facile", w.mon, week, w.phase));
+    const tue = at(1);
+    if (tue >= START_DATE) {
+      const cat = w.longType === "test" ? "easy" : "quality";
+      sessions.push(mkSession(c++, tue, cat, w.quality.title, w.quality.km, week, w.phase));
+    }
+    if (w.freq >= 3 && w.fri > 0) sessions.push(mkSession(c++, at(4), "easy", "Footing facile", w.fri, week, w.phase));
+    const cat = w.longType === "test" ? "test" : "long";
+    sessions.push(mkSession(c++, at(6), cat, w.longTitle || "Sortie longue", w.long, week, w.phase));
+  });
+  return sessions;
+}
+
+function getMonthMatrix(year, month){
+  const first = new Date(year, month, 1);
+  const offset = (first.getDay()+6)%7;
+  const start = addDays(first, -offset);
+  const weeks = [];
+  let cur = start;
+  for (let w=0; w<6; w++){
+    const row = [];
+    for (let d=0; d<7; d++){ row.push(cur); cur = addDays(cur,1); }
+    weeks.push(row);
+  }
+  return weeks;
+}
+
+/* ================================================================
+   SUPABASE : profils + séances (chaque séance appartient à un profil)
+   ================================================================ */
+function sessionToRow(s){
+  return {
+    profile_id: activeProfileId,
+    id: s.id, date: s.date, cat: s.cat, title: s.title, km: s.km,
+    week: s.week ?? null, phase: s.phase ?? null, completed: !!s.completed,
+    actual_km: s.actualKm, actual_min: s.actualMin, notes: s.notes || "",
+  };
+}
+function rowToSession(r){
+  return {
+    id: r.id, date: r.date, cat: r.cat, title: r.title, km: Number(r.km),
+    week: r.week, phase: r.phase, completed: !!r.completed,
+    actualKm: r.actual_km != null ? Number(r.actual_km) : null,
+    actualMin: r.actual_min != null ? Number(r.actual_min) : null,
+    notes: r.notes || "",
+  };
+}
+async function fetchProfiles(){
+  const { data, error } = await supabaseClient.from("profiles").select("*").order("created_at", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+async function createProfileRemote(id, name){
+  const { error } = await supabaseClient.from("profiles").insert({ id, name });
+  if (error) throw error;
+}
+async function fetchSessionsForProfile(profileId){
+  const { data, error } = await supabaseClient.from("sessions").select("*").eq("profile_id", profileId).order("date", { ascending: true });
+  if (error) throw error;
+  return (data || []).map(rowToSession);
+}
+async function upsertSessionRemote(session){
+  const { error } = await supabaseClient.from("sessions").upsert(sessionToRow(session));
+  if (error) throw error;
+}
+async function deleteSessionRemote(id){
+  const { error } = await supabaseClient.from("sessions").delete().eq("profile_id", activeProfileId).eq("id", id);
+  if (error) throw error;
+}
+async function replaceAllRemote(newSessions){
+  const { error: delErr } = await supabaseClient.from("sessions").delete().eq("profile_id", activeProfileId);
+  if (delErr) throw delErr;
+  const { error: insErr } = await supabaseClient.from("sessions").insert(newSessions.map(sessionToRow));
+  if (insErr) throw insErr;
+}
+
+/* ================================================================
+   ETAT
+   ================================================================ */
+let profiles = [];
+let activeProfileId = null;
+let sessions = [];
+let viewMonth, viewYear;
+let modalState = null;
+let profileModalOpen = false;
+let profileModalError = null;
+let confirmResetVisible = false;
+let loading = true;
+let loadError = null;
+let syncError = null;
+
+/* ================================================================
+   RENDU
+   ================================================================ */
+function render(){
+  const app = document.getElementById("app");
+
+  if (!SUPABASE_READY) { app.innerHTML = renderSetupNeeded(); return; }
+  if (loading) { app.innerHTML = `<div class="center-msg"><div class="center-msg-inner">Chargement du plan…</div></div>`; return; }
+  if (loadError) { app.innerHTML = renderLoadError(); return; }
+
+  const today = todayStr();
+  const totalPlannedKm = sessions.reduce((a,s)=>a+s.km, 0);
+  const completed = sessions.filter(s=>s.completed);
+  const totalDoneKm = completed.reduce((a,s)=>a+(s.actualKm ?? s.km), 0);
+  const remainingKm = Math.max(totalPlannedKm - totalDoneKm, 0);
+
+  const { mon, sun } = isoWeekBounds(new Date());
+  const weekSessions = sessions.filter(s=>s.date>=mon && s.date<=sun);
+  const weekInfo = weekSessions.find(s=>typeof s.week === "number") || weekSessions[0];
+
+  let statusMsg;
+  if (today < START_DATE) statusMsg = "Démarre demain";
+  else if (RACE_DATE.getTime() <= Date.now()) statusMsg = "Terminé — bravo !";
+  else if (weekInfo) statusMsg = `S${weekInfo.week}/32 · ${PHASE_LABELS[weekInfo.phase] || ""}`;
+  else statusMsg = "—";
+
+  const html = `
+    ${syncError ? renderSyncBanner() : ""}
+    ${renderHeader()}
+    <div class="wrap">
+      ${renderStats(totalDoneKm, totalPlannedKm, remainingKm, completed.length, statusMsg)}
+      ${renderProfileBar()}
+      ${renderCalendarSection(today)}
+      ${renderChartSection(weekInfo ? weekInfo.week : null)}
+      ${renderPaceSection()}
+    </div>
+    ${modalState ? renderModal() : (profileModalOpen ? renderProfileModal() : "")}
+  `;
+  app.innerHTML = html;
+  tick();
+}
+
+function renderSetupNeeded(){
+  return `<div class="center-msg"><div class="center-msg-inner">
+    <h2>Configuration Supabase requise</h2>
+    <p>Ouvrez ce fichier dans un éditeur et remplacez, en haut du <code>&lt;script&gt;</code>,
+    <code>SUPABASE_URL</code> et <code>SUPABASE_KEY</code> par les valeurs de votre projet.</p>
+  </div></div>`;
+}
+function renderLoadError(){
+  return `<div class="center-msg"><div class="center-msg-inner">
+    <h2>Connexion à Supabase impossible</h2>
+    <p>Vérifiez l'URL, la clé, que le script SQL a bien été exécuté, et votre connexion internet.</p>
+    <p style="color:#B5453D;font-size:13px;"><strong>Détail :</strong> ${escapeHtml(loadError)}</p>
+    <button class="btn-primary" data-action="retry-load">${ICONS.rotate}<span>Réessayer</span></button>
+  </div></div>`;
+}
+function renderSyncBanner(){
+  return `<div class="sync-banner"><span>${escapeHtml(syncError)}</span><button data-action="dismiss-sync-error">${ICONS.x}</button></div>`;
+}
+
+function renderHeader(){
+  return `
+  <div class="header">
+    <div class="header-inner">
+      <div class="eyebrow">${ICONS.mountain}<span>Marathon du Lac d'Annecy</span></div>
+      <h1 class="h1">Objectif&nbsp;: passer sous les 4 heures</h1>
+      <div class="countdown">
+        <div class="countdown-unit"><div class="countdown-value" id="cd-days">--</div><div class="countdown-label">jours</div></div>
+        <div class="countdown-unit"><div class="countdown-value" id="cd-hours">--</div><div class="countdown-label">heures</div></div>
+        <div class="countdown-unit"><div class="countdown-value" id="cd-min">--</div><div class="countdown-label">minutes</div></div>
+        <div class="countdown-unit"><div class="countdown-value" id="cd-sec">--</div><div class="countdown-label">secondes</div></div>
+      </div>
+      <div class="race-info">Dimanche 18 avril 2027 · 8h00 · Le Pâquier, Annecy</div>
+    </div>
+    <svg class="mountains" viewBox="0 0 800 60" preserveAspectRatio="none"><polygon points="0,60 0,35 80,10 150,32 230,5 320,30 400,12 470,34 560,8 650,28 720,15 800,33 800,60" fill="#1F6F8B"/></svg>
+  </div>`;
+}
+
+function renderStats(done, planned, remaining, count, statusMsg){
+  return `
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Km réalisés</div><div class="stat-value">${done.toFixed(0)} / ${planned.toFixed(0)}</div><div class="stat-sub">kilomètres</div></div>
+    <div class="stat"><div class="stat-label">Km restants</div><div class="stat-value">${remaining.toFixed(0)}</div><div class="stat-sub">avant le marathon</div></div>
+    <div class="stat"><div class="stat-label">Séances</div><div class="stat-value">${count} / ${sessions.length}</div><div class="stat-sub">réalisées</div></div>
+    <div class="stat"><div class="stat-label">Semaine</div><div class="stat-value">${statusMsg}</div></div>
+  </div>`;
+}
+
+function renderProfileBar(){
+  return `
+  <div class="profile-bar">
+    ${profiles.map(p=>`<button class="profile-chip ${p.id===activeProfileId?"active":""}" data-action="switch-profile" data-profile-id="${p.id}">${escapeHtml(p.name)}</button>`).join("")}
+    <button class="profile-chip add" data-action="open-add-profile">${ICONS.plus}<span>Ajouter</span></button>
+  </div>`;
+}
+
+function renderPill(s, today){
+  const c = CATS[s.cat] || CATS.easy;
+  const isPast = s.date < today;
+  const missed = isPast && !s.completed && s.cat !== "race";
+  return `
+    <button class="pill ${missed?"missed":""}" draggable="true" data-session-id="${s.id}"
+      style="background:${c.bg};border-color:${c.border};color:${c.color}" title="${escapeHtml(s.title)} — ${s.km} km">
+      <div class="pill-title">${s.completed?ICONS.check:""}<span>${s.cat==="race"?"🏁 ":""}${escapeHtml(s.title)}</span></div>
+      <div class="pill-km">${s.km} km</div>
+    </button>`;
+}
+
+function renderCalendarSection(today){
+  const matrix = getMonthMatrix(viewYear, viewMonth);
+  const byDate = {};
+  sessions.forEach(s=>{ (byDate[s.date] = byDate[s.date] || []).push(s); });
+
+  const cells = matrix.flat().map(date=>{
+    const ds = fmtDate(date);
+    const inMonth = date.getMonth() === viewMonth;
+    const isToday = ds === today;
+    const daySessions = byDate[ds] || [];
+    const pills = daySessions.map(s=>renderPill(s, today)).join("");
+    return `
+      <div class="day-cell ${inMonth?"":"out"}" data-date="${ds}">
+        <span class="day-num ${isToday?"today":""}">${date.getDate()}</span>
+        <div>${pills}</div>
+      </div>`;
+  }).join("");
+
+  const activeName = (profiles.find(p=>p.id===activeProfileId) || {}).name || "";
+
+  return `
+  <div class="cal-section">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button class="icon-btn" data-action="prev-month">${ICONS.chevronLeft}</button>
+        <div class="cal-title">${MONTHS_FR[viewMonth]} ${viewYear}</div>
+        <button class="icon-btn" data-action="next-month">${ICONS.chevronRight}</button>
+      </div>
+      <button class="btn-primary" data-action="add-session">${ICONS.plus} Ajouter une séance</button>
+    </div>
+    <div class="legend">${Object.entries(CATS).map(([k,c])=>`<div class="legend-item"><span class="legend-dot" style="background:${c.color}"></span>${c.label}</div>`).join("")}</div>
+    <div class="calendar">
+      <div class="cal-weekdays">${DAYS_FR.map(d=>`<div class="cal-weekday">${d}</div>`).join("")}</div>
+      <div class="cal-grid">${cells}</div>
+    </div>
+  </div>`;
+}
+
+function renderChartSection(currentWeek){
+  const totals = {};
+  sessions.forEach(s=>{ if (typeof s.week === "number") totals[s.week] = (totals[s.week]||0) + s.km; });
+  const bars = Array.from({length:32}, (_,i)=>totals[i+1] || 0);
+  const max = Math.max(...bars, 1);
+  const barsHtml = bars.map((km,i)=>{
+    const week = i+1;
+    const isCurrent = week === currentWeek;
+    const h = Math.max((km/max)*100, 3);
+    return `<div class="bar-col" title="Semaine ${week} — ${km.toFixed(1)} km"><div class="bar ${isCurrent?"current":""}" style="height:${h}%"></div></div>`;
+  }).join("");
+  return `
+  <div class="card">
+    <div class="card-title">${ICONS.trendingUp}<span>Volume hebdomadaire sur les 32 semaines</span></div>
+    <div class="chart-scroll"><div class="chart-bars" style="min-width:${32*14}px">${barsHtml}</div></div>
+    <div class="chart-labels"><span>Sept. 2026</span><span>Avril 2027</span></div>
+  </div>`;
+}
+
+function renderPaceSection(){
+  const rows = [
+    ["Footing", "6:00 – 6:30 /km"],
+    ["Seuil / tempo", "4:55 – 5:10 /km"],
+    ["Fractionné", "4:35 – 4:50 /km"],
+    ["Allure marathon", "5:30 – 5:40 /km"],
+    ["Semi actuel", "≈ 5:13 /km"],
+  ];
+  const activeName = (profiles.find(p=>p.id===activeProfileId) || {}).name || "cette personne";
+  return `
+  <div class="card">
+    <div class="card-title">${ICONS.info}<span>Repères d'allure (à ajuster selon vos sensations)</span></div>
+    <div class="pace-grid">${rows.map(([l,v])=>`<div><div class="pace-label">${l}</div><div class="pace-value">${v}</div></div>`).join("")}</div>
+    <div class="pace-note">Ces allures sont estimées à partir d'un semi en 1h50 et à affiner via le test grandeur nature de la semaine 20 (24 janvier 2027).</div>
+  </div>
+  <div class="reset-row">
+    ${confirmResetVisible ? `
+      <div class="confirm-row">
+        <span>Effacer et régénérer le calendrier de ${escapeHtml(activeName)} ?</span>
+        <button class="btn-danger" data-action="confirm-reset">Confirmer</button>
+        <button class="btn-ghost" data-action="cancel-reset">Annuler</button>
+      </div>` : `
+      <button class="reset-link" data-action="reset-plan">${ICONS.rotate}<span>Réinitialiser le calendrier de ${escapeHtml(activeName)}</span></button>`}
+  </div>`;
+}
+
+function renderModal(){
+  const { mode, data, error } = modalState;
+  const isEdit = mode === "edit";
+  return `
+  <div class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">${isEdit?"Modifier la séance":"Ajouter une séance"}</div>
+        <button class="icon-btn" data-action="close-modal">${ICONS.x}</button>
+      </div>
+      ${error ? `<div class="modal-error">${escapeHtml(error)}</div>` : ""}
+      <div class="field"><label>Titre</label><input id="m-title" value="${escapeHtml(data.title||"")}" placeholder="Ex. Fractionné 6x800m"></div>
+      <div class="field-row">
+        <div class="field"><label>Date</label><input type="date" id="m-date" value="${data.date}"></div>
+        <div class="field"><label>Distance (km)</label><input id="m-km" value="${data.km??5}" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label>Type de séance</label>
+        <select id="m-cat">${Object.entries(CATS).map(([k,c])=>`<option value="${k}" ${data.cat===k?"selected":""}>${c.label}</option>`).join("")}</select>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="m-notes" rows="2" placeholder="Sensations, météo, allure réelle…">${escapeHtml(data.notes||"")}</textarea></div>
+      <label class="checkbox-row"><input type="checkbox" id="m-completed" ${data.completed?"checked":""}><span>Séance réalisée</span></label>
+      <div class="field-row" id="m-actual-fields" style="margin-top:12px;display:${data.completed?"grid":"none"}">
+        <div class="field"><label>Distance réelle (km)</label><input id="m-actual-km" value="${data.actualKm??data.km??""}" inputmode="decimal"></div>
+        <div class="field"><label>Durée (min, optionnel)</label><input id="m-actual-min" value="${data.actualMin??""}" inputmode="decimal"></div>
+      </div>
+      <div class="modal-footer">
+        ${isEdit ? `<button class="btn-delete" data-action="delete-session">${ICONS.trash}<span>Supprimer</span></button>` : "<span></span>"}
+        <div style="display:flex;gap:8px;">
+          <button class="btn-cancel" data-action="close-modal">Annuler</button>
+          <button class="btn-save" data-action="save-session">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderProfileModal(){
+  return `
+  <div class="modal-overlay">
+    <div class="modal" style="max-width:360px;">
+      <div class="modal-header">
+        <div class="modal-title">Ajouter une personne</div>
+        <button class="icon-btn" data-action="close-add-profile">${ICONS.x}</button>
+      </div>
+      ${profileModalError ? `<div class="modal-error">${escapeHtml(profileModalError)}</div>` : ""}
+      <div class="field"><label>Prénom</label><input id="new-profile-name" placeholder="Ex. Camille"></div>
+      <p style="font-size:12px;color:var(--faint);margin-top:-4px;">Le même plan de base sera créé pour cette personne ; elle pourra ensuite le modifier librement.</p>
+      <div class="modal-footer">
+        <span></span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-cancel" data-action="close-add-profile">Annuler</button>
+          <button class="btn-save" data-action="create-profile">Ajouter</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ================================================================
+   ACTIONS — profils
+   ================================================================ */
+function openAddProfileModal(){ profileModalOpen = true; profileModalError = null; render(); }
+function closeAddProfileModal(){ profileModalOpen = false; render(); }
+
+function resolveInitialProfileId(list){
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("profile");
+  if (fromUrl && list.some(p=>p.id===fromUrl)) return fromUrl;
+  let fromStorage = null;
+  try { fromStorage = localStorage.getItem("active-profile-id"); } catch(e){}
+  if (fromStorage && list.some(p=>p.id===fromStorage)) return fromStorage;
+  return list.length ? list[0].id : null;
+}
+
+async function switchProfile(id){
+  if (!id || id === activeProfileId) { profileModalOpen = false; render(); return; }
+  activeProfileId = id;
+  try { localStorage.setItem("active-profile-id", id); } catch(e){}
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("profile", id);
+    window.history.replaceState({}, "", url);
+  } catch(e){}
+  profileModalOpen = false;
+  await loadSessionsForActiveProfile();
+}
+
+async function handleCreateProfile(){
+  const input = document.getElementById("new-profile-name");
+  const name = input.value.trim();
+  if (!name) return;
+  const id = uniqueProfileId(slugify(name));
+  try {
+    await createProfileRemote(id, name);
+    profiles.push({ id, name });
+    await switchProfile(id);
+  } catch (err) {
+    profileModalError = "Échec de la création : " + (err.message || err);
+    render();
+  }
+}
+
+/* ================================================================
+   ACTIONS — séances
+   ================================================================ */
+function openNewModal(date){
+  modalState = { mode:"new", data:{ date, cat:"easy", title:"", km:5, notes:"", completed:false, actualKm:null, actualMin:null }, error:null };
+  render();
+}
+function openEditModal(session){
+  modalState = { mode:"edit", data:{ ...session }, error:null };
+  render();
+}
+function closeModal(){ modalState = null; render(); }
+
+async function handleSaveSession(){
+  const title = document.getElementById("m-title").value.trim();
+  if (!title) return;
+  const date = document.getElementById("m-date").value;
+  const km = parseFloat(document.getElementById("m-km").value.replace(",",".")) || 0;
+  const cat = document.getElementById("m-cat").value;
+  const notes = document.getElementById("m-notes").value;
+  const completed = document.getElementById("m-completed").checked;
+  const actualKm = completed ? (parseFloat(document.getElementById("m-actual-km").value.replace(",",".")) || 0) : null;
+  const actualMinRaw = document.getElementById("m-actual-min").value;
+  const actualMin = completed && actualMinRaw !== "" ? (parseFloat(actualMinRaw.replace(",",".")) || null) : null;
+
+  const base = modalState.data;
+  const isNew = modalState.mode === "new";
+  const updated = {
+    ...base, title, date, km, cat, notes, completed, actualKm, actualMin,
+    id: isNew ? ("c" + Date.now()) : base.id,
+    week: isNew ? (base.week ?? null) : base.week,
+    phase: isNew ? (base.phase || "CUSTOM") : base.phase,
+  };
+
+  const saveBtn = document.querySelector('[data-action="save-session"]');
+  if (saveBtn) saveBtn.textContent = "Enregistrement…";
+
+  try {
+    await upsertSessionRemote(updated);
+    if (isNew) sessions.push(updated);
+    else sessions = sessions.map(s => s.id === updated.id ? updated : s);
+    modalState = null;
+    render();
+  } catch (err) {
+    modalState = { ...modalState, error: "Échec de la sauvegarde : " + (err.message || err) };
+    render();
+  }
+}
+async function handleDeleteSession(){
+  const id = modalState.data.id;
+  try {
+    await deleteSessionRemote(id);
+    sessions = sessions.filter(s=>s.id!==id);
+    modalState = null;
+    render();
+  } catch (err) {
+    modalState = { ...modalState, error: "Échec de la suppression : " + (err.message || err) };
+    render();
+  }
+}
+async function moveSession(id, newDate){
+  const target = sessions.find(s=>s.id===id);
+  if (!target || target.date === newDate) return;
+  const updated = { ...target, date: newDate };
+  try {
+    await upsertSessionRemote(updated);
+    sessions = sessions.map(s=> s.id===id ? updated : s);
+    render();
+  } catch (err) {
+    syncError = "Échec du déplacement de la séance : " + (err.message || err);
+    render();
+  }
+}
+function changeMonth(delta){
+  let m = viewMonth + delta, y = viewYear;
+  if (m<0){ m=11; y--; } if (m>11){ m=0; y++; }
+  viewMonth = m; viewYear = y;
+  render();
+}
+async function handleConfirmReset(){
+  confirmResetVisible = false;
+  const def = generateDefaultSessions();
+  try {
+    await replaceAllRemote(def);
+    sessions = def;
+    render();
+  } catch (err) {
+    syncError = "Échec de la réinitialisation : " + (err.message || err);
+    render();
+  }
+}
+
+/* ================================================================
+   CHARGEMENT DEPUIS SUPABASE
+   ================================================================ */
+async function loadSessionsForActiveProfile(){
+  loading = true; loadError = null;
+  render();
+  try {
+    let data = await fetchSessionsForProfile(activeProfileId);
+    if (!data.length) {
+      data = generateDefaultSessions();
+      await replaceAllRemote(data);
+    }
+    sessions = data;
+    loading = false;
+    render();
+  } catch (err) {
+    loading = false;
+    loadError = (err && err.message) ? err.message : String(err);
+    render();
+  }
+}
+
+async function loadFromSupabase(){
+  loading = true; loadError = null;
+  render();
+  try {
+    profiles = await fetchProfiles();
+    if (!profiles.length) {
+      loading = false;
+      loadError = "Aucun profil trouvé. Vérifiez que le script SQL a bien été exécuté (il crée Axel, Maël et Estelle).";
+      render();
+      return;
+    }
+    activeProfileId = resolveInitialProfileId(profiles);
+    await loadSessionsForActiveProfile();
+  } catch (err) {
+    loading = false;
+    loadError = (err && err.message) ? err.message : String(err);
+    render();
+  }
+}
+
+async function handleAction(action, el){
+  switch(action){
+    case "prev-month": changeMonth(-1); break;
+    case "next-month": changeMonth(1); break;
+    case "add-session": openNewModal(fmtDate(new Date(viewYear, viewMonth, 1))); break;
+    case "close-modal": closeModal(); break;
+    case "save-session": await handleSaveSession(); break;
+    case "delete-session": await handleDeleteSession(); break;
+    case "reset-plan": confirmResetVisible = true; render(); break;
+    case "cancel-reset": confirmResetVisible = false; render(); break;
+    case "confirm-reset": await handleConfirmReset(); break;
+    case "retry-load": await loadFromSupabase(); break;
+    case "dismiss-sync-error": syncError = null; render(); break;
+    case "switch-profile": await switchProfile(el.dataset.profileId); break;
+    case "open-add-profile": openAddProfileModal(); break;
+    case "close-add-profile": closeAddProfileModal(); break;
+    case "create-profile": await handleCreateProfile(); break;
+  }
+}
+
+/* ================================================================
+   DELEGATION D'EVENEMENTS
+   ================================================================ */
+function attachEventListeners(){
+  const app = document.getElementById("app");
+
+  app.addEventListener("click", (e)=>{
+    const pill = e.target.closest(".pill");
+    if (pill) {
+      const s = sessions.find(x=>x.id===pill.dataset.sessionId);
+      if (s) openEditModal(s);
+      return;
+    }
+    const actionEl = e.target.closest("[data-action]");
+    if (actionEl) { handleAction(actionEl.dataset.action, actionEl); return; }
+    if (e.target.classList.contains("modal-overlay")) { closeModal(); closeAddProfileModal(); return; }
+    const dayCell = e.target.closest(".day-cell");
+    if (dayCell) { openNewModal(dayCell.dataset.date); return; }
+  });
+
+  app.addEventListener("change", (e)=>{
+    if (e.target.id === "m-completed") {
+      const fields = document.getElementById("m-actual-fields");
+      fields.style.display = e.target.checked ? "grid" : "none";
+      if (e.target.checked) {
+        const actualKmInput = document.getElementById("m-actual-km");
+        if (!actualKmInput.value) actualKmInput.value = document.getElementById("m-km").value;
+      }
+    }
+  });
+
+  app.addEventListener("dragstart", (e)=>{
+    const pill = e.target.closest(".pill");
+    if (pill) e.dataTransfer.setData("text/plain", pill.dataset.sessionId);
+  });
+  app.addEventListener("dragover", (e)=>{
+    const cell = e.target.closest(".day-cell");
+    if (cell) { e.preventDefault(); cell.classList.add("drag-over"); }
+  });
+  app.addEventListener("dragleave", (e)=>{
+    const cell = e.target.closest(".day-cell");
+    if (cell) cell.classList.remove("drag-over");
+  });
+  app.addEventListener("drop", (e)=>{
+    const cell = e.target.closest(".day-cell");
+    if (cell) {
+      e.preventDefault();
+      cell.classList.remove("drag-over");
+      const id = e.dataTransfer.getData("text/plain");
+      if (id) moveSession(id, cell.dataset.date);
+    }
+  });
+}
+
+/* ================================================================
+   COMPTE A REBOURS
+   ================================================================ */
+function tick(){
+  const elD = document.getElementById("cd-days");
+  if (!elD) return;
+  const abs = Math.max(RACE_DATE.getTime() - Date.now(), 0);
+  elD.textContent = pad(Math.floor(abs/86400000));
+  document.getElementById("cd-hours").textContent = pad(Math.floor((abs%86400000)/3600000));
+  document.getElementById("cd-min").textContent = pad(Math.floor((abs%3600000)/60000));
+  document.getElementById("cd-sec").textContent = pad(Math.floor((abs%60000)/1000));
+}
+
+/* ================================================================
+   INITIALISATION
+   ================================================================ */
+async function init(){
+  const now = new Date();
+  viewMonth = now.getMonth();
+  viewYear = now.getFullYear();
+
+  attachEventListeners();
+  render();
+
+  if (!SUPABASE_READY) return;
+  await loadFromSupabase();
+  setInterval(tick, 1000);
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
